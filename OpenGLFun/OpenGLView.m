@@ -39,6 +39,7 @@ const Vertex vertices[] = {
 };
 */
 const GLubyte indices[] = {
+    //front
     0, 1, 2,
     2, 3, 0,
     // Back
@@ -111,8 +112,8 @@ const GLubyte indices[] = {
 }
 
 - (void)setDepthBuffer {
-    glGenBuffers(1, &_depthRenderBuffer);
-    glBindBuffer(GL_RENDERBUFFER, _depthRenderBuffer);
+    glGenRenderbuffers(1, &_depthRenderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, _depthRenderBuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, self.frame.size.width, self.frame.size.height);
 }
 
