@@ -23,7 +23,11 @@ const Vertex vertices[] = {
     {{1, -1, 0}, {1, 0, 0, 1}},
     {{1, 1, 0},{0, 1, 0, 1}},
     {{-1, 1, 0}, {0, 0, 1, 1}},
-    {{-1, -1, 0}, {0, 0, 0, 1}}
+    {{-1, -1, 0}, {0, 0, 0, 1}},
+    {{1, -1, -1}, {1, 0, 0, 1}},
+    {{1, 1, -1},{0, 1, 0, 1}},
+    {{-1, 1, -1}, {0, 0, 1, 1}},
+    {{-1, -1, -1}, {0, 0, 0, 1}}
 };
 
  /*
@@ -36,7 +40,22 @@ const Vertex vertices[] = {
 */
 const GLubyte indices[] = {
     0, 1, 2,
-    2, 3, 0
+    2, 3, 0,
+    // Back
+    4, 6, 5,
+    4, 7, 6,
+    // Left
+    2, 7, 3,
+    7, 6, 2,
+    // Right
+    0, 4, 1,
+    4, 1, 5,
+    // Top
+    6, 2, 1,
+    1, 6, 5,
+    // Bottom
+    0, 3, 7,
+    0, 7, 4
 };
 
 @interface OpenGLView ()
@@ -49,6 +68,7 @@ const GLubyte indices[] = {
 @property (nonatomic, assign) GLuint projectionUniform;
 @property (nonatomic, assign) GLuint modelViewUniform;
 @property (nonatomic, assign) float currentRotation;
+@property (nonatomic, assign) GLuint depthRenderBuffer;
 
 
 @end
@@ -90,16 +110,25 @@ const GLubyte indices[] = {
     [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:_eaglLayer];
 }
 
+- (void)setDepthBuffer {
+    glGenBuffers(1, &_depthRenderBuffer);
+    glBindBuffer(GL_RENDERBUFFER, _depthRenderBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, self.frame.size.width, self.frame.size.height);
+}
+
 - (void)setupFrameBuffer {
     GLuint frameBuffer;
     glGenFramebuffers(1, &frameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _colorRenderBuffer);
+    
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _depthRenderBuffer);
 }
 
 - (void)render:(CADisplayLink *)displayLink {
     glClearColor(0, 104.0/255, 55.0/255, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
     
     CC3GLMatrix *projection = [CC3GLMatrix matrix];
     float h = 4.0 * self.frame.size.height / self.frame.size.width;
@@ -204,6 +233,7 @@ const GLubyte indices[] = {
     if (self = [super initWithFrame:frame]) {
         [self setupLayer];
         [self setupContext];
+        [self setDepthBuffer];
         [self setupRenderBuffer];
         [self setupFrameBuffer];
         [self compileShaders];
